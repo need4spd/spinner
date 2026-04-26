@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>돌림판 · STAR RAIL</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold:        #c8a96e;
+      --gold-lt:     #e8d09a;
+      --gold-bright: #f5e8c0;
+      --teal:        #5de8f0;
+      --panel:       rgba(6, 10, 24, 0.94);
+      --b-gold:      rgba(200, 169, 110, 0.45);
+      --b-gold-hi:   rgba(200, 169, 110, 0.75);
+      --text:        #e0d8c8;
+      --text-dim:    rgba(224, 216, 200, 0.38);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+      /* ── 이미지 기반 배경: 심층 바이올렛 성운 + 황금 스타버스트 ── */
+      background-color: #07040e;
+      background-image:
+        /* 황금 스타버스트 — 우상단 */
+        radial-gradient(ellipse at 75% 8%,  rgba(240,195,70,0.16) 0%, rgba(200,140,40,0.08) 22%, transparent 38%),
+        /* 바이올렛/마젠타 성운 — 중좌 */
+        radial-gradient(ellipse at 22% 50%, rgba(115,30,200,0.48) 0%, rgba(80,20,150,0.22) 40%, transparent 62%),
+        /* 퍼플 성운 확산 — 우중 */
+        radial-gradient(ellipse at 70% 55%, rgba(90,20,140,0.28) 0%, transparent 45%),
+        /* 딥 마젠타 — 좌하 */
+        radial-gradient(ellipse at 10% 80%, rgba(80,15,80,0.38) 0%, transparent 50%),
+        /* 앰버 지평선 — 하단 */
+        radial-gradient(ellipse at 50% 105%, rgba(120,55,15,0.22) 0%, transparent 35%),
+        /* 희미한 청보라 — 우하 */
+        radial-gradient(ellipse at 88% 90%, rgba(50,15,90,0.25) 0%, transparent 40%),
+        /* 베이스 그라디언트 */
+        linear-gradient(148deg, #0e0925 0%, #180b35 18%, #0f0622 45%, #0a0418 72%, #060210 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text);
+      padding: 2.2rem 1.5rem 3rem;
+      overflow-x: hidden;
+    }
+
+    /* ─── star canvas (bottom layer) ─── */
+    #starCanvas {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* ─── 황금 스타버스트 글로우 (고정 레이어) ─── */
+    body::after {
+      content: '';
+      position: fixed; top: -8%; right: -6%;
+      width: 52vw; height: 52vw; max-width: 700px; max-height: 700px;
+      border-radius: 50%; pointer-events: none; z-index: 1;
+      background: radial-gradient(circle,
+        rgba(255,220,100,0.13) 0%,
+        rgba(220,160,50,0.07) 30%,
+        rgba(160,80,200,0.04) 55%,
+        transparent 70%);
+      animation: burstPulse 6s ease-in-out infinite alternate;
+    }
+    @keyframes burstPulse {
+      from { opacity: 0.7; transform: scale(1); }
+      to   { opacity: 1;   transform: scale(1.08); }
+    }
+
+    /* ─── hex grid overlay (퍼플 톤) ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 0 L60 17.3 L60 52 L30 69.3 L0 52 L0 17.3 Z' fill='none' stroke='rgba(160%2C100%2C220%2C0.045)' stroke-width='1'/%3E%3Cpath d='M30 34.6 L60 52 L60 86.6 L30 104 L0 86.6 L0 52 Z' fill='none' stroke='rgba(160%2C100%2C220%2C0.045)' stroke-width='1'/%3E%3C/svg%3E");
+    }
+
+    /* all visible content above bg */
+    header, .layout, .overlay { position: relative; z-index: 2; }
+
+    /* ─── header ─── */
+    header { text-align: center; margin-bottom: 2.2rem; width: 100%; }
+
+    .title-row {
+      display: flex; align-items: center; justify-content: center; gap: 1.4rem;
+    }
+    .title-line {
+      flex: 1; max-width: 140px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold));
+    }
+    .title-line.r { background: linear-gradient(to left, transparent, var(--gold)); }
+
+    header h1 {
+      font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+      font-weight: 900; letter-spacing: 5px;
+      color: var(--gold-lt);
+      text-shadow: 0 0 24px rgba(200,169,110,0.55), 0 0 50px rgba(200,169,110,0.2);
+    }
+    .title-sub {
+      margin-top: 0.45rem; font-size: 0.75rem;
+      color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+    }
+    .title-diamond {
+      display: inline-block; width: 5px; height: 5px;
+      background: var(--gold); transform: rotate(45deg);
+      margin: 0 8px; vertical-align: middle;
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    /* ─── corner marks (reusable) ─── */
+    .corner {
+      position: absolute; z-index: 2; pointer-events: none;
+      width: 14px; height: 14px;
+      border-style: solid; border-color: var(--gold);
+    }
+    .corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+    .corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+    .corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    /* ─── HSR panel base ─── */
+    .panel {
+      position: relative; background: var(--panel);
+      border: 1px solid var(--b-gold);
+      box-shadow: 0 0 30px rgba(200,169,110,0.07), inset 0 0 40px rgba(0,0,0,0.4);
+    }
+
+    /* ─── layout ─── */
+    .layout {
+      display: flex; gap: 2.5rem; align-items: flex-start;
+      width: 100%; max-width: 920px; flex-wrap: wrap; justify-content: center;
+    }
+
+    /* ─── wheel section ─── */
+    .wheel-section {
+      display: flex; flex-direction: column; align-items: center; gap: 2rem;
+      flex-shrink: 0;
+    }
+
+    /* outer decorative ring */
+    .wheel-wrap {
+      position: relative; padding: 20px;
+    }
+    .wheel-wrap::before, .wheel-wrap::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    }
+    .wheel-wrap::before {
+      border: 1px solid var(--b-gold);
+      box-shadow: 0 0 30px rgba(200,169,110,0.12), inset 0 0 30px rgba(200,169,110,0.04);
+    }
+    .wheel-wrap::after {
+      inset: 6px;
+      border: 1px solid rgba(200,169,110,0.18);
+    }
+
+    /* tick marks around ring */
+    .ticks {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+
+    .wheel-inner {
+      position: relative; width: 380px; height: 380px;
+    }
+
+    /* pointer */
+    .pointer-wrap {
+      position: absolute; top: -22px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 10; display: flex; flex-direction: column; align-items: center;
+    }
+    .ptr-diamond {
+      width: 12px; height: 12px;
+      background: #e888c8; transform: rotate(45deg);
+      box-shadow: 0 0 10px #e888c8, 0 0 22px rgba(232,136,200,0.5);
+    }
+    .ptr-body {
+      margin-top: 2px;
+      width: 0; height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 28px solid #e888c8;
+      filter: drop-shadow(0 4px 10px rgba(232,136,200,0.8));
+    }
+    .ptr-stem {
+      width: 3px; height: 10px;
+      background: linear-gradient(to bottom, #e888c8, transparent);
+    }
+
+    #wheelCanvas {
+      width: 380px; height: 380px; border-radius: 50%; display: block;
+    }
+
+    /* ─── spin button ─── */
+    .spin-btn {
+      position: relative; overflow: hidden;
+      min-width: 210px; padding: 0.95rem 3rem;
+      font-family: inherit; font-size: 1.05rem; font-weight: 900;
+      letter-spacing: 4px; color: #07060f;
+      background: linear-gradient(135deg, #f0e0a8 0%, #c8a96e 45%, #9a7840 100%);
+      border: none; border-radius: 3px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(200,169,110,0.3), 0 6px 20px rgba(0,0,0,0.5);
+      transition: filter 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    /* shine sweep */
+    .spin-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.2) 50%, transparent 75%);
+      transform: translateX(-120%); transition: transform 0.5s;
+    }
+    .spin-btn:hover:not(:disabled)::before { transform: translateX(120%); }
+    .spin-btn:hover:not(:disabled) {
+      filter: brightness(1.12);
+      transform: translateY(-2px);
+      box-shadow: 0 0 35px rgba(200,169,110,0.5), 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .spin-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+    .spin-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .spin-btn.spinning {
+      animation: btnGlow 0.7s ease-in-out infinite alternate;
+    }
+    @keyframes btnGlow {
+      from { box-shadow: 0 0 20px rgba(200,169,110,0.3), 0 6px 20px rgba(0,0,0,0.5); }
+      to   { box-shadow: 0 0 50px rgba(200,169,110,0.7), 0 6px 25px rgba(0,0,0,0.5); }
+    }
+    /* dark corner marks on gold button */
+    .spin-btn .corner { border-color: rgba(7,6,15,0.55); }
+
+    /* ─── options panel ─── */
+    .opts-panel {
+      flex: 1; min-width: 265px; max-width: 305px;
+      border-radius: 4px; padding: 1.8rem;
+    }
+
+    .opts-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 0.9rem; margin-bottom: 1.2rem;
+      border-bottom: 1px solid var(--b-gold);
+    }
+    .opts-head h2 {
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 3px;
+      color: var(--gold); text-transform: uppercase;
+    }
+    .cnt-badge {
+      font-size: 0.73rem; letter-spacing: 1px;
+      padding: 0.2rem 0.65rem;
+      border: 1px solid var(--b-gold); border-radius: 20px; color: var(--text-dim);
+    }
+    .cnt-badge.full { border-color: rgba(255,80,80,0.4); color: rgba(255,120,120,0.75); }
+
+    .opt-list {
+      display: flex; flex-direction: column; gap: 0.6rem;
+      margin-bottom: 1.2rem; max-height: 340px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--b-gold) transparent;
+    }
+
+    .opt-item { display: flex; align-items: center; gap: 0.5rem; animation: slideIn 0.18s ease; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .opt-swatch {
+      width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0;
+    }
+
+    .opt-input {
+      flex: 1; background: transparent; border: none;
+      border-bottom: 1px solid rgba(200,169,110,0.25);
+      padding: 0.4rem 0.3rem; color: var(--text);
+      font-family: inherit; font-size: 0.9rem; outline: none;
+      transition: border-color 0.2s; min-width: 0;
+    }
+    .opt-input:focus { border-bottom-color: var(--teal); }
+    .opt-input::placeholder { color: var(--text-dim); }
+
+    /* ── Weight input ── */
+    .opt-weight {
+      width: 38px; flex-shrink: 0;
+      background: transparent; border: none;
+      border-bottom: 1px solid rgba(200,169,110,0.3);
+      padding: 0.4rem 0.2rem; color: var(--gold-lt);
+      font-family: inherit; font-size: 0.85rem; font-weight: 700;
+      text-align: center; outline: none;
+      -moz-appearance: textfield;
+      transition: border-color 0.2s;
+    }
+    .opt-weight::-webkit-inner-spin-button,
+    .opt-weight::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .opt-weight:focus { border-bottom-color: var(--gold); }
+
+    /* ── Percentage badge ── */
+    .opt-pct {
+      width: 34px; flex-shrink: 0;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
+      color: var(--text-dim); text-align: right;
+    }
+
+    /* ── Column header ── */
+    .opt-col-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0 0 0.5rem 0; margin-bottom: 0.3rem;
+      border-bottom: 1px solid rgba(200,169,110,0.12);
+    }
+    .opt-col-header span {
+      font-size: 0.65rem; letter-spacing: 1.5px; color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .opt-col-header .ch-name { flex: 1; padding-left: 1.05rem; }
+    .opt-col-header .ch-wt   { width: 38px; text-align: center; flex-shrink: 0; }
+    .opt-col-header .ch-pct  { width: 34px; text-align: right; flex-shrink: 0; }
+    .opt-col-header .ch-rm   { width: 25px; flex-shrink: 0; }
+
+    .rm-btn {
+      width: 25px; height: 25px; border-radius: 2px; flex-shrink: 0;
+      border: 1px solid rgba(200,80,80,0.18); background: transparent;
+      color: rgba(200,90,90,0.5); font-size: 0.95rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .rm-btn:hover:not(:disabled) {
+      border-color: rgba(220,70,70,0.55); color: #e06060;
+      background: rgba(180,60,60,0.1);
+    }
+    .rm-btn:disabled { opacity: 0.18; cursor: not-allowed; }
+
+    .panel-sep {
+      height: 1px; margin: 1.2rem 0;
+      background: linear-gradient(to right, transparent, var(--b-gold), transparent);
+    }
+
+    .panel-btns { display: flex; gap: 0.6rem; }
+
+    .add-btn {
+      flex: 1; padding: 0.72rem; font-family: inherit;
+      font-size: 0.85rem; letter-spacing: 2px; color: var(--teal);
+      background: transparent; border: 1px solid rgba(93,232,240,0.22);
+      border-radius: 3px; cursor: pointer; transition: all 0.2s;
+    }
+    .add-btn:hover:not(:disabled) {
+      background: rgba(93,232,240,0.07); border-color: rgba(93,232,240,0.48);
+    }
+    .add-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+
+    .reset-btn {
+      padding: 0.72rem 0.9rem; font-family: inherit;
+      font-size: 0.75rem; letter-spacing: 1px; color: var(--text-dim);
+      background: transparent; border: 1px solid rgba(200,169,110,0.18);
+      border-radius: 3px; cursor: pointer; transition: all 0.2s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .reset-btn:hover {
+      color: var(--gold-lt); border-color: rgba(200,169,110,0.4);
+      background: rgba(200,169,110,0.06);
+    }
+
+    /* ══════════════ result overlay ══════════════ */
+    .overlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(1,2,8,0.88); backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+
+    /* ── Aventurine: full-screen gold flash ── */
+    .avt-flash {
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse at center,
+        rgba(255,248,210,0.95) 0%, rgba(200,169,110,0.5) 35%, transparent 70%);
+      opacity: 0; transform: scale(0.5);
+    }
+    .avt-flash.burst {
+      animation: flashBurst 0.75s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    @keyframes flashBurst {
+      0%   { opacity: 0;   transform: scale(0.4); }
+      18%  { opacity: 1;   transform: scale(1.1); }
+      100% { opacity: 0;   transform: scale(2.8); }
+    }
+
+    /* ── Aventurine: vertical light pillar ── */
+    .avt-pillar {
+      position: absolute; left: 50%; top: -60px; bottom: -60px;
+      transform: translateX(-50%);
+      width: 220px; pointer-events: none; z-index: 0;
+      background: linear-gradient(to right,
+        transparent 0%, rgba(200,169,110,0.06) 25%,
+        rgba(200,169,110,0.14) 50%,
+        rgba(200,169,110,0.06) 75%, transparent 100%);
+      filter: blur(18px);
+      animation: pillarBreath 2.4s ease-in-out infinite;
+    }
+    @keyframes pillarBreath {
+      0%,100% { opacity: 0.55; }
+      50%     { opacity: 1; }
+    }
+
+    /* ── Aventurine: expanding rings ── */
+    .avt-ring {
+      position: absolute; border-radius: 50%;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 40px; height: 40px;
+      border: 1.5px solid rgba(200,169,110,0.9);
+      pointer-events: none; z-index: 0;
+      animation: ringExpand 1.2s ease-out forwards;
+    }
+    .avt-ring:nth-child(2) { animation-delay: 0.18s; border-color: rgba(93,232,240,0.7); }
+    .avt-ring:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes ringExpand {
+      0%   { width: 40px;  height: 40px;  opacity: 0.9; }
+      100% { width: 700px; height: 700px; opacity: 0;   }
+    }
+
+    /* ── Ray burst ── */
+    .rays {
+      position: absolute; width: 800px; height: 800px;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none; z-index: 0;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,   rgba(200,169,110,0.12) 5deg,  transparent 10deg,
+        transparent 17deg,  rgba(200,169,110,0.07)22deg,  transparent 27deg,
+        transparent 33deg,  rgba(200,169,110,0.15)39deg,  transparent 44deg,
+        transparent 51deg,  rgba(200,169,110,0.05)57deg,  transparent 62deg,
+        transparent 68deg,  rgba(200,169,110,0.11)74deg,  transparent 79deg,
+        transparent 86deg,  rgba(200,169,110,0.08)92deg,  transparent 97deg,
+        transparent 103deg, rgba(200,169,110,0.13)109deg, transparent 114deg,
+        transparent 120deg, rgba(200,169,110,0.06)126deg, transparent 131deg,
+        transparent 137deg, rgba(200,169,110,0.10)143deg, transparent 148deg,
+        transparent 154deg, rgba(200,169,110,0.14)160deg, transparent 165deg,
+        transparent 171deg, rgba(200,169,110,0.07)177deg, transparent 182deg,
+        transparent 188deg, rgba(200,169,110,0.12)194deg, transparent 199deg,
+        transparent 205deg, rgba(200,169,110,0.09)211deg, transparent 216deg,
+        transparent 222deg, rgba(200,169,110,0.15)228deg, transparent 233deg,
+        transparent 239deg, rgba(200,169,110,0.06)245deg, transparent 250deg,
+        transparent 256deg, rgba(200,169,110,0.11)262deg, transparent 267deg,
+        transparent 273deg, rgba(200,169,110,0.08)279deg, transparent 284deg,
+        transparent 290deg, rgba(200,169,110,0.13)296deg, transparent 301deg,
+        transparent 307deg, rgba(200,169,110,0.07)313deg, transparent 318deg,
+        transparent 324deg, rgba(200,169,110,0.10)330deg, transparent 335deg,
+        transparent 341deg, rgba(200,169,110,0.06)347deg, transparent 352deg,
+        transparent 358deg, rgba(200,169,110,0.12)360deg
+      );
+      animation: rayRotate 8s linear infinite;
+    }
+    @keyframes rayRotate { to { transform: translate(-50%,-50%) rotate(360deg); } }
+    .rays::after {
+      content: ''; position: absolute; inset: 22%; border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,169,110,0.22) 0%, transparent 70%);
+    }
+
+    /* ── Result card: card-deal flip-in ── */
+    .result-card {
+      position: relative; z-index: 1;
+      background: linear-gradient(160deg, rgba(5,9,22,0.99) 0%, rgba(8,14,32,0.99) 100%);
+      border: 1px solid var(--b-gold-hi); border-radius: 6px;
+      padding: 2.2rem 3.5rem 2.8rem; text-align: center;
+      box-shadow: 0 0 0 1px rgba(200,169,110,0.1),
+                  0 0 60px rgba(200,169,110,0.2),
+                  0 0 120px rgba(200,169,110,0.08),
+                  0 40px 80px rgba(0,0,0,0.85);
+      max-width: 88vw; min-width: 340px;
+      animation: cardDeal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transform-origin: center bottom;
+    }
+    @keyframes cardDeal {
+      0%   { transform: perspective(900px) rotateX(55deg) translateY(70px) scale(0.82); opacity: 0; }
+      65%  { transform: perspective(900px) rotateX(-4deg) translateY(-6px) scale(1.02); opacity: 1; }
+      100% { transform: perspective(900px) rotateX(0deg)  translateY(0)    scale(1);    opacity: 1; }
+    }
+
+    /* ── Aventurine card header ── */
+    .avt-card-top {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .avt-top-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,169,110,0.5));
+    }
+    .avt-top-line.r { background: linear-gradient(to left, transparent, rgba(200,169,110,0.5)); }
+    .avt-name {
+      font-size: 0.65rem; letter-spacing: 4px; font-weight: 700;
+      color: rgba(200,169,110,0.55); text-transform: uppercase;
+    }
+
+    /* ── Dice row ── */
+    .dice-row {
+      display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.5rem;
+    }
+    .die {
+      width: 40px; height: 40px;
+      background: rgba(200,169,110,0.08);
+      border: 1.5px solid rgba(200,169,110,0.5);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; font-weight: 900; color: var(--gold-lt);
+      font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+      text-shadow: 0 0 10px rgba(200,169,110,0.8);
+      transition: all 0.3s;
+    }
+    .die.settled {
+      border-color: var(--gold);
+      box-shadow: 0 0 14px rgba(200,169,110,0.55), inset 0 0 8px rgba(200,169,110,0.1);
+      animation: dieSettle 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes dieSettle {
+      0%   { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+
+    /* ── Result text ── */
+    .res-sub {
+      font-size: 0.7rem; letter-spacing: 5px; color: var(--text-dim);
+      text-transform: uppercase; margin-bottom: 0.8rem;
+    }
+    .res-sep {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 0.9rem;
+    }
+    .res-sep-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--gold)); }
+    .res-sep-line.r { background: linear-gradient(to left, transparent, var(--gold)); }
+    .res-sep-dia {
+      width: 7px; height: 7px; background: var(--gold);
+      transform: rotate(45deg); box-shadow: 0 0 10px var(--gold);
+    }
+
+    .res-winner {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; letter-spacing: 3px;
+      color: var(--gold-bright);
+      text-shadow: 0 0 20px rgba(200,169,110,0.65), 0 0 50px rgba(200,169,110,0.3);
+      margin-bottom: 0.5rem; padding: 0 0.5rem;
+      opacity: 0;
+    }
+    /* scan-reveal triggered by JS adding class */
+    .res-winner.reveal {
+      animation: textScan 0.45s 0s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes textScan {
+      0%   { clip-path: polygon(0 0, 0 0, 0 110%, 0 110%);
+             opacity: 1; text-shadow: 0 0 40px rgba(200,169,110,1), 0 0 80px rgba(200,169,110,0.5); }
+      100% { clip-path: polygon(0 0, 110% 0, 110% 110%, 0 110%);
+             opacity: 1; text-shadow: 0 0 20px rgba(200,169,110,0.65), 0 0 50px rgba(200,169,110,0.3); }
+    }
+
+    .res-bar {
+      height: 3px; width: 80px; border-radius: 2px; margin: 0.8rem auto 2rem;
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .res-bar.show { opacity: 1; }
+    .res-close {
+      padding: 0.72rem 2.6rem; font-family: inherit;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 3px; color: #07060f;
+      background: linear-gradient(135deg, #f0e0a8, #c8a96e); border: none;
+      border-radius: 3px; cursor: pointer; transition: filter 0.2s;
+      opacity: 0; animation: none;
+    }
+    .res-close.show {
+      animation: fadeUp 0.4s 0.1s both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .res-close:hover { filter: brightness(1.1); }
+
+    /* ─── particle canvas ─── */
+    #pCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 399; }
+  </style>
+</head>
+<body>
+
+<canvas id="starCanvas"></canvas>
+
+<header>
+  <div class="title-row">
+    <div class="title-line"></div>
+    <h1>돌 림 판</h1>
+    <div class="title-line r"></div>
+  </div>
+  <div class="title-sub">
+    <span class="title-diamond"></span>
+    Spin the Wheel · Fate's Decision
+    <span class="title-diamond"></span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Wheel -->
+  <div class="wheel-section">
+    <div class="wheel-wrap">
+      <canvas class="ticks" id="tickCanvas" width="420" height="420"></canvas>
+      <div class="wheel-inner">
+        <div class="pointer-wrap">
+          <div class="ptr-diamond"></div>
+          <div class="ptr-body"></div>
+          <div class="ptr-stem"></div>
+        </div>
+        <canvas id="wheelCanvas" width="380" height="380"></canvas>
+      </div>
+    </div>
+    <button class="spin-btn" id="spinBtn">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      돌 리 기
+    </button>
+  </div>
+
+  <!-- Options -->
+  <div class="opts-panel panel">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="opts-head">
+      <h2>옵션 설정</h2>
+      <span class="cnt-badge" id="cntBadge">3 / 10</span>
+    </div>
+    <div class="opt-col-header">
+      <span class="ch-name">이름</span>
+      <span class="ch-wt">가중치</span>
+      <span class="ch-pct">확률</span>
+      <span class="ch-rm"></span>
+    </div>
+    <div class="opt-list" id="optList"></div>
+    <div class="panel-sep"></div>
+    <div class="panel-btns">
+      <button class="add-btn" id="addBtn">＋ 옵션 추가</button>
+      <button class="reset-btn" id="resetBtn">균등</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Result -->
+<div class="overlay" id="overlay">
+  <!-- Aventurine FX layers (behind card) -->
+  <div class="avt-flash" id="avtFlash"></div>
+  <div class="avt-pillar"></div>
+  <div id="ringContainer"></div>
+  <div class="rays"></div>
+
+  <!-- Result card -->
+  <div class="result-card panel" id="resultCard">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+
+    <!-- Aventurine header -->
+    <div class="avt-card-top">
+      <div class="avt-top-line"></div>
+      <span class="avt-name">✦ Aventurine ✦</span>
+      <div class="avt-top-line r"></div>
+    </div>
+
+    <!-- Dice row -->
+    <div class="dice-row" id="diceRow">
+      <div class="die" id="die0">6</div>
+      <div class="die" id="die1">4</div>
+      <div class="die" id="die2">5</div>
+    </div>
+
+    <div class="res-sub">F A T E &thinsp;'&thinsp;S &nbsp; V E R D I C T</div>
+    <div class="res-sep">
+      <div class="res-sep-line"></div>
+      <div class="res-sep-dia"></div>
+      <div class="res-sep-line r"></div>
+    </div>
+    <div class="res-winner" id="winnerText">???</div>
+    <div class="res-bar" id="winnerBar"></div>
+    <button class="res-close" id="closeBtn">확 인</button>
+  </div>
+</div>
+
+<canvas id="pCanvas"></canvas>
+
+<script>
+/* ═══════════════ Star field ═══════════════ */
+(function () {
+  const c = document.getElementById('starCanvas');
+  const x = c.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    stars = Array.from({ length: 240 }, () => {
+      const roll = Math.random();
+      /* 황금(15%) | 바이올렛(25%) | 연보라(20%) | 흰색(40%) */
+      const hue = roll < 0.15 ? `rgba(240,200,100,`
+               : roll < 0.40 ? `rgba(180,100,255,`
+               : roll < 0.60 ? `rgba(200,170,255,`
+               :                `rgba(230,222,215,`;
+      return {
+        px: Math.random() * c.width,
+        py: Math.random() * c.height,
+        r:  Math.random() * 1.2 + 0.15,
+        a:  Math.random(),
+        sp: Math.random() * 0.006 + 0.003,
+        ph: Math.random() * Math.PI * 2,
+        hue,
+      };
+    });
+  }
+
+  function draw(t) {
+    x.clearRect(0, 0, c.width, c.height);
+    stars.forEach(s => {
+      const a = s.a * (0.4 + 0.6 * Math.sin(t * s.sp + s.ph));
+      x.beginPath();
+      x.arc(s.px, s.py, s.r, 0, Math.PI * 2);
+      x.fillStyle = s.hue + a + ')';
+      x.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  resize(); requestAnimationFrame(draw);
+})();
+
+/* ═══════════════ Tick marks around wheel ═══════════════ */
+(function () {
+  const tc = document.getElementById('tickCanvas');
+  const tx = tc.getContext('2d');
+  const CX = 210, CY = 210, R = 205;
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2 - Math.PI / 2;
+    const isMajor = i % 5 === 0;
+    const len = isMajor ? 10 : 5;
+    tx.beginPath();
+    tx.moveTo(CX + (R - len) * Math.cos(a), CY + (R - len) * Math.sin(a));
+    tx.lineTo(CX + R * Math.cos(a), CY + R * Math.sin(a));
+    tx.strokeStyle = isMajor ? 'rgba(200,169,110,0.6)' : 'rgba(200,169,110,0.25)';
+    tx.lineWidth = isMajor ? 1.5 : 1;
+    tx.stroke();
+  }
+})();
+
+/* ═══════════════ Wheel drawing ═══════════════ */
+const HSR = [
+  '#f090b8', // rose pink      — 키레네 핑크 머리
+  '#50ccc0', // mint teal      — 청록 머리카락
+  '#c090e8', // soft purple    — 나비 장식 보라
+  '#88b8e8', // periwinkle     — 하늘빛 배경
+  '#f4c0d8', // blossom pink   — 꽃잎 연핑크
+  '#5ab4ac', // deep mint      — 진한 청록
+  '#d4a8f0', // lavender       — 연보라 라벤더
+  '#70a4e0', // cornflower     — 코발트 하늘
+  '#e878b0', // deeper rose    — 진핑크
+  '#a078d8', // violet         — 바이올렛 퍼플
+];
+const GOLD_STR = '#c8a96e';
+
+let opts = [
+  { text: '옵션 1', weight: 1 },
+  { text: '옵션 2', weight: 1 },
+  { text: '옵션 3', weight: 1 },
+];
+let rot  = 0;
+let busy = false;
+
+const wc  = document.getElementById('wheelCanvas');
+const wx  = wc.getContext('2d');
+const W   = wc.width, H = wc.height;
+const CX  = W / 2, CY = H / 2, R = CX - 12;
+
+function totalWeight() {
+  return opts.reduce((s, o) => s + o.weight, 0);
+}
+
+function drawWheel(r = 0) {
+  const n    = opts.length;
+  const twt  = totalWeight();
+  wx.clearRect(0, 0, W, H);
+
+  let startAngle = r - Math.PI / 2; // start from top
+
+  for (let i = 0; i < n; i++) {
+    const arc = (opts[i].weight / twt) * 2 * Math.PI;
+    const s   = startAngle;
+    const e   = s + arc;
+    const c   = HSR[i % HSR.length];
+
+    /* base segment */
+    wx.beginPath(); wx.moveTo(CX, CY); wx.arc(CX, CY, R, s, e); wx.closePath();
+    wx.fillStyle = c; wx.fill();
+
+    /* depth gradient overlay */
+    const rg = wx.createRadialGradient(CX, CY, 0, CX, CY, R);
+    rg.addColorStop(0,   'rgba(255,255,255,0.15)');
+    rg.addColorStop(0.6, 'rgba(0,0,0,0.0)');
+    rg.addColorStop(1,   'rgba(0,0,0,0.3)');
+    wx.fillStyle = rg; wx.fill();
+
+    /* spoke */
+    wx.beginPath(); wx.moveTo(CX, CY);
+    wx.lineTo(CX + R * Math.cos(s), CY + R * Math.sin(s));
+    wx.strokeStyle = 'rgba(230,210,255,0.55)'; wx.lineWidth = 1.5; wx.stroke();
+
+    /* text — only if segment is wide enough */
+    if (arc > 0.18) {
+      wx.save();
+      wx.translate(CX, CY); wx.rotate(s + arc / 2);
+      wx.textAlign = 'right'; wx.textBaseline = 'middle';
+      const fs = arc > 0.5 ? (n <= 5 ? 14 : 12) : 10;
+      wx.font = `700 ${fs}px 'Noto Sans KR', sans-serif`;
+      wx.fillStyle   = 'rgba(255,255,255,0.95)';
+      wx.shadowColor = 'rgba(0,0,0,0.9)'; wx.shadowBlur = 5;
+      const maxLen = arc > 0.5 ? 9 : 5;
+      const lbl = opts[i].text.length > maxLen ? opts[i].text.slice(0, maxLen - 1) + '…' : opts[i].text;
+      wx.fillText(lbl, R - 16, 0);
+      wx.restore();
+    }
+
+    startAngle = e;
+  }
+
+  /* outer rim */
+  wx.beginPath(); wx.arc(CX, CY, R, 0, Math.PI * 2);
+  wx.strokeStyle = 'rgba(210,180,255,0.6)'; wx.lineWidth = 2; wx.stroke();
+
+  /* inner glowing ring */
+  wx.beginPath(); wx.arc(CX, CY, R - 4, 0, Math.PI * 2);
+  wx.strokeStyle = 'rgba(180,150,255,0.2)'; wx.lineWidth = 1; wx.stroke();
+
+  /* center layers */
+  const rings = [{ r: 30, fill: '#04060e', stroke: 'rgba(210,180,255,0.8)', sw: 1.8 },
+                 { r: 20, fill: null,       stroke: 'rgba(200,160,255,0.4)', sw: 1 },
+                 { r: 11, fill: '#d4a8f0',  stroke: null, sw: 0 }];
+  rings.forEach(({ r, fill, stroke, sw }) => {
+    wx.beginPath(); wx.arc(CX, CY, r, 0, Math.PI * 2);
+    if (fill) { wx.fillStyle = fill; wx.fill(); }
+    if (stroke) { wx.strokeStyle = stroke; wx.lineWidth = sw; wx.stroke(); }
+  });
+}
+
+/* ═══════════════ Options list ═══════════════ */
+function pctStr(weight) {
+  const twt = totalWeight();
+  return twt === 0 ? '0%' : (weight / twt * 100).toFixed(1).replace('.0', '') + '%';
+}
+
+function refreshPcts() {
+  document.querySelectorAll('.opt-pct').forEach((el, i) => {
+    if (i < opts.length) el.textContent = pctStr(opts[i].weight);
+  });
+}
+
+function renderList() {
+  const list = document.getElementById('optList');
+  list.innerHTML = '';
+
+  opts.forEach((o, i) => {
+    const item = document.createElement('div');
+    item.className = 'opt-item';
+
+    /* color swatch */
+    const sw = document.createElement('div');
+    sw.className = 'opt-swatch';
+    sw.style.cssText = `background:${HSR[i%HSR.length]};box-shadow:0 0 5px ${HSR[i%HSR.length]}99`;
+
+    /* name input */
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 'opt-input';
+    inp.value = o.text; inp.maxLength = 15; inp.placeholder = `옵션 ${i+1}`;
+    inp.addEventListener('input', e => {
+      opts[i].text = e.target.value.trim() || `옵션 ${i+1}`;
+      drawWheel(rot);
+    });
+
+    /* weight input */
+    const wt = document.createElement('input');
+    wt.type = 'number'; wt.className = 'opt-weight';
+    wt.value = o.weight; wt.min = 1; wt.max = 99; wt.step = 1;
+    wt.addEventListener('input', e => {
+      const v = Math.max(1, Math.min(99, parseInt(e.target.value) || 1));
+      opts[i].weight = v;
+      if (e.target.value !== '' && parseInt(e.target.value) !== v) e.target.value = v;
+      refreshPcts();
+      drawWheel(rot);
+    });
+
+    /* percentage display */
+    const pct = document.createElement('span');
+    pct.className = 'opt-pct';
+    pct.textContent = pctStr(o.weight);
+
+    /* remove button */
+    const rm = document.createElement('button');
+    rm.className = 'rm-btn'; rm.textContent = '×';
+    rm.disabled = opts.length <= 2;
+    rm.addEventListener('click', () => {
+      if (opts.length <= 2) return;
+      opts.splice(i, 1); renderList(); drawWheel(rot);
+    });
+
+    item.append(sw, inp, wt, pct, rm);
+    list.appendChild(item);
+  });
+
+  const b = document.getElementById('cntBadge');
+  b.textContent = `${opts.length} / 10`;
+  b.classList.toggle('full', opts.length >= 10);
+  document.getElementById('addBtn').disabled = opts.length >= 10;
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  if (opts.length >= 10) return;
+  opts.push({ text: `옵션 ${opts.length + 1}`, weight: 1 });
+  renderList(); drawWheel(rot);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  opts.forEach(o => o.weight = 1);
+  renderList(); drawWheel(rot);
+});
+
+/* ═══════════════ Spin ═══════════════ */
+document.getElementById('spinBtn').addEventListener('click', () => {
+  if (busy) return;
+  busy = true;
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = true; btn.classList.add('spinning');
+
+  const extra  = (5 + Math.floor(Math.random() * 5)) * 2 * Math.PI;
+  const target = rot + extra + Math.random() * 2 * Math.PI;
+  const dur    = 4800 + Math.random() * 1600;
+  const t0 = performance.now(), r0 = rot;
+
+  function ease(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function frame(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    rot = r0 + (target - r0) * ease(p);
+    drawWheel(rot);
+    if (p < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      rot  = target % (2 * Math.PI);
+      busy = false; btn.disabled = false; btn.classList.remove('spinning');
+      showResult();
+    }
+  }
+  requestAnimationFrame(frame);
+});
+
+/* ═══════════════ Result — Aventurine Ultimate ═══════════════ */
+const DICE_FACES = ['1','2','3','4','5','6'];
+
+function winner() {
+  const twt  = totalWeight();
+  /* convert wheel rotation to a position in [0, twt) */
+  const negRot = ((-rot % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const pos    = (negRot / (2 * Math.PI)) * twt;
+
+  let cum = 0;
+  for (let i = 0; i < opts.length; i++) {
+    cum += opts[i].weight;
+    if (pos < cum) return i;
+  }
+  return opts.length - 1;
+}
+
+function rollDie(el, finalFace, delay) {
+  setTimeout(() => {
+    el.classList.remove('settled');
+    let t = 0;
+    const total = 900;
+
+    function step() {
+      const progress = t / total;
+      /* slow down gradually */
+      const interval = 60 + progress * 220;
+      el.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+      t += interval;
+      if (t < total) setTimeout(step, interval);
+      else {
+        el.textContent = finalFace;
+        el.classList.add('settled');
+      }
+    }
+    step();
+  }, delay);
+}
+
+function spawnRings() {
+  const container = document.getElementById('ringContainer');
+  container.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const r = document.createElement('div');
+    r.className = 'avt-ring';
+    container.appendChild(r);
+  }
+  /* rebuild so animation restarts */
+  void container.offsetHeight;
+}
+
+function showResult() {
+  const idx = winner();
+  const col = HSR[idx % HSR.length];
+
+  /* reset animated elements */
+  const winEl  = document.getElementById('winnerText');
+  const barEl  = document.getElementById('winnerBar');
+  const closeEl = document.getElementById('closeBtn');
+  winEl.textContent = opts[idx];
+  winEl.classList.remove('reveal');
+  barEl.classList.remove('show');
+  closeEl.classList.remove('show');
+  barEl.style.background = col;
+  barEl.style.boxShadow  = `0 0 14px ${col}, 0 0 28px ${col}55`;
+
+  /* show overlay */
+  document.getElementById('overlay').classList.add('show');
+
+  /* Phase 1 (0ms): flash burst */
+  const flash = document.getElementById('avtFlash');
+  flash.classList.remove('burst');
+  void flash.offsetWidth;
+  flash.classList.add('burst');
+
+  /* Phase 2 (0ms): rings */
+  spawnRings();
+
+  /* Phase 3 (0ms): dice roll — settle at random faces */
+  const finalFaces = [
+    DICE_FACES[Math.floor(Math.random()*6)],
+    DICE_FACES[Math.floor(Math.random()*6)],
+    DICE_FACES[Math.floor(Math.random()*6)],
+  ];
+  rollDie(document.getElementById('die0'), finalFaces[0], 80);
+  rollDie(document.getElementById('die1'), finalFaces[1], 200);
+  rollDie(document.getElementById('die2'), finalFaces[2], 140);
+
+  /* Phase 4 (1100ms): scan-reveal winner text */
+  setTimeout(() => {
+    winEl.classList.add('reveal');
+  }, 1100);
+
+  /* Phase 5 (1400ms): show bar + close button */
+  setTimeout(() => {
+    barEl.classList.add('show');
+    closeEl.classList.add('show');
+  }, 1400);
+
+  /* Phase 6: particles */
+  spawnParticles(col);
+}
+
+document.getElementById('closeBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  clearParticles();
+  /* reset for next time */
+  const winEl   = document.getElementById('winnerText');
+  const closeEl = document.getElementById('closeBtn');
+  winEl.classList.remove('reveal');
+  closeEl.classList.remove('show');
+  document.getElementById('winnerBar').classList.remove('show');
+});
+
+/* ═══════════════ Particles — Aventurine: diamonds & chips ═══════════════ */
+const pc = document.getElementById('pCanvas');
+const px = pc.getContext('2d');
+let parts = [], pRaf = null;
+
+function spawnParticles(accent) {
+  pc.width = window.innerWidth; pc.height = window.innerHeight;
+  const pal = ['#f4c0d8', '#d4a8f0', accent, '#50ccc0', '#ffffff', '#e878b0', '#a8d8f8'];
+  /* 3 burst origins: center + two offset */
+  const origins = [
+    [pc.width/2, pc.height/2],
+    [pc.width/2 - 60, pc.height/2 + 20],
+    [pc.width/2 + 60, pc.height/2 + 20],
+  ];
+
+  parts = Array.from({ length: 110 }, (_, i) => {
+    const [ox, oy] = origins[i % origins.length];
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 9 + 3;
+    /* shape types: diamond, card, chip, star */
+    const shapeRoll = Math.random();
+    const suits = ['♦','♠','♥','♣'];
+    return {
+      x: ox + (Math.random()-0.5)*40,
+      y: oy + (Math.random()-0.5)*30,
+      vx: Math.cos(angle) * speed * 0.8,
+      vy: Math.sin(angle) * speed - 4,
+      sz: Math.random() * 7 + 3,
+      rot: Math.random() * 360,
+      rs:  (Math.random()-0.5) * 14,
+      col: pal[Math.floor(Math.random()*pal.length)],
+      life: 1,
+      decay: Math.random()*0.010 + 0.006,
+      shape: shapeRoll < 0.35 ? 'diamond'
+           : shapeRoll < 0.60 ? 'card'
+           : shapeRoll < 0.80 ? 'chip'
+           : 'star',
+      suit: suits[Math.floor(Math.random()*4)],
+    };
+  });
+  if (pRaf) cancelAnimationFrame(pRaf);
+  runParts();
+}
+
+function drawDiamond(ctx, sz) {
+  ctx.beginPath();
+  ctx.moveTo(0, -sz);
+  ctx.lineTo(sz * 0.55, 0);
+  ctx.lineTo(0, sz);
+  ctx.lineTo(-sz * 0.55, 0);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCard(ctx, sz, suit) {
+  const w = sz * 0.75, h = sz * 1.1;
+  ctx.beginPath();
+  ctx.roundRect(-w/2, -h/2, w, h, 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.font = `${sz * 0.6}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(suit, 0, 0);
+}
+
+function drawChip(ctx, sz) {
+  ctx.beginPath(); ctx.arc(0, 0, sz * 0.7, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, sz * 0.45, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+}
+
+function drawStar(ctx, sz) {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = (i/5)*Math.PI*2 - Math.PI/2;
+    const b = a + Math.PI/5;
+    if (i===0) ctx.moveTo(Math.cos(a)*sz, Math.sin(a)*sz);
+    else ctx.lineTo(Math.cos(a)*sz, Math.sin(a)*sz);
+    ctx.lineTo(Math.cos(b)*(sz*0.4), Math.sin(b)*(sz*0.4));
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+function runParts() {
+  px.clearRect(0, 0, pc.width, pc.height);
+  let alive = false;
+
+  parts.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.16;
+    p.rot += p.rs; p.life -= p.decay;
+    if (p.life > 0) alive = true;
+
+    px.save();
+    px.globalAlpha = Math.max(0, p.life * p.life);
+    px.translate(p.x, p.y); px.rotate(p.rot * Math.PI / 180);
+    px.fillStyle = p.col;
+
+    if      (p.shape === 'diamond') drawDiamond(px, p.sz);
+    else if (p.shape === 'card')    drawCard(px, p.sz, p.suit);
+    else if (p.shape === 'chip')    drawChip(px, p.sz);
+    else                            drawStar(px, p.sz);
+
+    px.restore();
+  });
+
+  if (alive) pRaf = requestAnimationFrame(runParts);
+  else px.clearRect(0, 0, pc.width, pc.height);
+}
+
+function clearParticles() {
+  if (pRaf) { cancelAnimationFrame(pRaf); pRaf = null; }
+  px.clearRect(0, 0, pc.width, pc.height);
+}
+
+/* ═══════════════ Init ═══════════════ */
+renderList();
+drawWheel();
+</script>
+</body>
+</html>
