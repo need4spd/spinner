@@ -1004,7 +1004,7 @@ function showResult() {
   const winEl  = document.getElementById('winnerText');
   const barEl  = document.getElementById('winnerBar');
   const closeEl = document.getElementById('closeBtn');
-  winEl.textContent = opts[idx];
+  winEl.textContent = opts[idx].text;
   winEl.classList.remove('reveal');
   barEl.classList.remove('show');
   closeEl.classList.remove('show');
